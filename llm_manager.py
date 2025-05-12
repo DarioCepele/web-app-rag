@@ -1,7 +1,7 @@
 from langchain_openai import AzureChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 import base64
-from utils.prompts import SYSTEM_PROMPT
+from utils.prompts import SYSTEM_PROMPT, GENERIC_LLM_PROMPT
 
 class LLMClient:
     def __init__(self, azure_deployment, azure_endpoint, api_version, api_key):
@@ -19,6 +19,13 @@ class LLMClient:
     def run(self, query: str, context: str) -> str:
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=f"Context:\n{context}\n\nQuery: {query}")
+        ]
+        return self.llm.invoke(messages).content
+    
+    def general(self, query: str, context: str) -> str:
+        messages = [
+            SystemMessage(content=GENERIC_LLM_PROMPT),
             HumanMessage(content=f"Context:\n{context}\n\nQuery: {query}")
         ]
         return self.llm.invoke(messages).content

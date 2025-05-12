@@ -45,10 +45,6 @@ llm = LLMClient(
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
-
 @app.route("/run_rag_query", methods=["POST"])
 def run_rag_query():
     data = request.get_json()
@@ -61,38 +57,23 @@ def run_rag_query():
 
     docs = search.query_index(query=query, top_k=top_k)
     doc_context = "\n".join([doc.page_content for doc in docs]) or "Nessun contesto trovato."
-    full_context = f"{chat_history}\n\nContesto documenti:\n{doc_context}"
+    full_context = f"{chat_history}\n\nDocument context:\n{doc_context}"
     response = llm.run(query, full_context)
     return jsonify({"response": response})
 
+@app.route("/general", methods=["POST"])
+def general():
+    data = request.get_json()
+    query = data.get("query")
+    chat_history = data.get("chat_history", "")
+    full_context = f"\nPrevious conversation:\n{chat_history}"
 
     if not query:
         return jsonify({"error": "Parametro 'query' mancante"}), 400
-
-    docs = search.query_index(query=query, top_k=top_k)
-    context = "\n".join([doc.page_content for doc in docs]) or "Nessun contesto trovato."
-    response = llm.run(query, context)
     
+    response = llm.general(query, full_context)
     return jsonify({"response": response})
 
 if __name__ == "__main__":
     app.run(debug=True)
     
-# @app.route("/run_rag_query", methods=["POST"])
-# def run_rag_query():
-#     data = request.get_json()
-#     query = data.get("query")
-#     top_k = data.get("top_k", 4)
-#     chat_history = data.get("chat_history", "")
-
-#     if not query:
-#         return jsonify({"error": "Parametro 'query' mancante"}), 400
-
-#     docs = search.query_index(query=query, top_k=top_k)
-#     doc_context = "\n".join([doc.page_content for doc in docs])
-
-#     full_context = f"{chat_history}\n\nContesto documenti:\n{doc_context}"
-
-#     response = llm.run(query, full_context)
-
-#     return jsonify({"response": response})
